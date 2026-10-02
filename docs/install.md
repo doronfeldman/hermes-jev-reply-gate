@@ -71,4 +71,4 @@ credential rollback. Hermes owns registry generation invalidation; retained call
 also become inert on unload. Existing observations stay in the canonical transcript.
 
 Suppression is experimental and requires a separately evaluated, authorized rollout.
-No live shadow deployment or suppression deployment was performed during development.
+A private deployment was verified in shadow mode on October 2, 2026 with one explicitly allowlisted group and the normal profile secret mechanism. Suppression remains disabled.

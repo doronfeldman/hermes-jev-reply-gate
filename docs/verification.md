@@ -34,3 +34,18 @@ specific coverage. Mocked classifications establish policy behavior, not model q
 eight synthetic live cases do not calibrate the suppression threshold. Production
 suppression must follow representative shadow evaluation, especially ambiguous Hebrew
 follow-ups and responses during active work.
+
+## Initial deployment
+
+A private gateway was installed with the exact reviewed host commit and the plugin's
+reviewed product files, verified by matching file hashes. Its existing profile and group
+permissions were retained; the policy is enabled only for one allowlisted Telegram group
+in **shadow** mode. The key resolves through the normal owning-profile `.env` with mode
+0600. The main response model remains unchanged.
+
+After completing Hermes's source-update preparation outside the service startup timeout,
+the gateway was active/running with zero subsequent restarts and both existing Telegram
+connections established. The profile's plugin manager loaded exactly one ingress policy.
+Configuration rollback and the previous host revision were retained privately. No real
+user messages were sent by the installer, and no live suppression was enabled. End-to-end
+production decision quality and the representative shadow period remain to be checked.
