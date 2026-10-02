@@ -1,8 +1,8 @@
 # Hermes Jev Reply Gate
 
-An experimental design for a Hermes Agent plugin that uses [TypeSafe AI's Jev](https://docs.typesafe.ai/introduction) to decide whether Hermes should participate in an ordinary Telegram group conversation.
+An experimental Hermes Agent plugin that uses [TypeSafe AI's Jev](https://docs.typesafe.ai/introduction) to decide whether Hermes should participate in an ordinary Telegram group conversation.
 
-**Status: design and benchmark stage. The plugin is not implemented or installable yet.** The scripts here benchmark classification; they do not modify Hermes or Telegram behavior.
+**Status: implemented, reviewed, and deployed in scoped shadow mode; requires the [bundled generic Hermes ingress patch](compat/README.md).** Unmodified Hermes 0.21.5 is unsupported. The actual client passed eight synthetic live API checks; suppression remains off pending representative evaluation. See [installation](docs/install.md), [compatibility](docs/compatibility.md), and [evaluation](docs/evaluation.md).
 
 ## Intended behavior
 
@@ -17,7 +17,40 @@ Incoming Telegram message
       Confident IGNORE                    → Preserve context, stay silent
 ```
 
-The proposed default is **shadow mode**: record decisions without suppressing messages. Enabling suppression would follow validation on representative conversations, especially follow-ups and Hebrew messages.
+The default is **shadow mode**, with classification disabled until explicitly scoped and enabled: record decisions without suppressing messages. Enabling suppression would follow validation on representative conversations, especially follow-ups and Hebrew messages.
+
+## Installation
+
+Apply the [matching Hermes patch](compat/README.md), install the plugin into the
+Hermes Python environment with uv, and configure the owning profile's standard
+`TYPESAFE_API_KEY` secret plus an explicit group allowlist. Follow the
+[installation guide](docs/install.md) for the complete configuration and rollback.
+A stock Hermes installation cannot load this plugin yet.
+
+## Development
+
+Use [uv](https://docs.astral.sh/uv/) 0.12.3 or newer. The repo commits its lockfile
+and defaults to Python 3.14; CI also checks standalone support on Python 3.11.
+
+```sh
+uv sync --locked
+uv run --locked ruff check .
+uv run --locked pytest -q
+uv run --locked python benchmarks/verify_results.py
+uv build --no-sources
+```
+
+Normal tests are offline and require no API key. Real Hermes integration is a
+separate CI job using the pinned host plus the bundled patch. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for that setup and [AGENTS.md](AGENTS.md) for
+ownership, privacy, testing, and maintenance rules.
+
+Every PR gets offline CI. Paid Jev smoke checks run only for `doronfeldman`-authored,
+same-repository PRs triggered by `doronfeldman`; fork and other-author PRs never
+receive the key. The key belongs only in the `jev-live` GitHub environment, restricted
+to `main`. Each eligible run uses three synthetic requests with no retries. The
+trusted live workflow becomes active after this setup reaches `main`.
+[CI policy and secret setup](CONTRIBUTING.md#ci-and-paid-api-checks).
 
 ## Initial latency measurements
 
@@ -43,18 +76,16 @@ For a simplified cost comparison, let `C_gate` be the classification cost, `C_ag
 
 ## Integration design
 
-Hermes exposes native Telegram handler registration and a `pre_gateway_dispatch` hook. A dispatch hook alone does not cover every busy-session path, so the proposed gate runs through an early native Telegram handler. The [design](docs/design.md) covers permissions, ignored-message context, timeouts, and implementation acceptance criteria.
+The plugin registers one policy through `ctx.register_ingress_policy`. Hermes owns authorization, transport scheduling, session identity and atomic observation writes; the plugin supplies the scoped Jev decision. Ignored messages remain in the one authoritative Hermes transcript. The [architecture](docs/design.md) explains the current design and why the host patch is needed; [compatibility](docs/compatibility.md) describes the implemented contract.
 
 No API keys, private chat messages, group IDs, server addresses, or production configuration are included. Jev receives message content when classification is enabled; configure the scope accordingly.
 
 ## Roadmap
 
-- Implement the scoped native Telegram handler and async Jev client.
-- Preserve ignored messages as attributed context without launching an agent turn.
-- Add shadow-mode decision logging and configurable thresholds/timeouts.
-- Test idle and busy sessions, permissions, follow-ups, errors, and profile isolation.
-- Validate on representative conversations before enabling suppression.
-- Document installation and publish a versioned plugin release after those checks pass.
+- Seek upstream support for the generic Hermes host extension.
+- Monitor actual gateway latency; eight request-local client smoke calls averaged 0.321 seconds, while historical numbers used a pooled HTTP client.
+- Validate representative conversations in scoped shadow mode before suppression.
+- Publish a supported release after host and live-rollout checks pass.
 
 ## Sources
 
