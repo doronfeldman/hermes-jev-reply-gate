@@ -1,5 +1,7 @@
 # Astra implementation-plan review
 
+Historical design review. The user subsequently approved the shared host extension; see the [implementation verification](verification.md) for the completed review and tests.
+
 Reviewed October 2, 2026 against Hermes 0.21.5, commit `34f8ec3b407e50bad3ae27e4cd79d65212061356`. This was a source/plan review, not a live integration test. No deployed configuration or credentials were changed.
 
 ## Recommendation

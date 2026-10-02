@@ -19,8 +19,7 @@ speaker labels; it never receives routing IDs, API keys in state, or tool payloa
 
 Measure real end-to-end added delay on this implementation before making latency claims.
 The historical benchmark used a persistent client, while this version uses request-local
-clients for lifecycle correctness. No new live Jev request, shadow observation period,
-production accuracy claim or suppression rollout has been performed.
+clients for lifecycle correctness. Eight synthetic live requests through the actual client were checked: mean 0.321 seconds, median 0.282 seconds, and eight expected labels. See [verification](verification.md). These measure client calls, not full gateway latency or production accuracy. A representative shadow observation period and suppression rollout remain outstanding.
 
 API contract checked against the [official TypeSafe API reference](https://docs.typesafe.ai/api)
 on October 2, 2026: direct `/v1/systemone` choice request; returned pinned model, choice,
