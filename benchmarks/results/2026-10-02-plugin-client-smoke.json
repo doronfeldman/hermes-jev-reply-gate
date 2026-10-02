@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-02",
+  "model": "jev-1.13.0",
+  "client": "actual plugin request-local HTTP client; first request included; direct API from deployment host",
+  "scope": "8 synthetic English/Hebrew cases; no production accuracy claim",
+  "mean_seconds": 0.3206375,
+  "median_seconds": 0.2818,
+  "samples": [
+    {
+      "case": "human_status",
+      "expected": "IGNORE",
+      "choice": "IGNORE",
+      "ignore_probability": 1.0,
+      "seconds": 0.5707
+    },
+    {
+      "case": "human_thanks",
+      "expected": "IGNORE",
+      "choice": "IGNORE",
+      "ignore_probability": 0.99,
+      "seconds": 0.3308
+    },
+    {
+      "case": "calendar_request",
+      "expected": "ANSWER",
+      "choice": "ANSWER",
+      "ignore_probability": 0.02,
+      "seconds": 0.2764
+    },
+    {
+      "case": "reminder_request",
+      "expected": "ANSWER",
+      "choice": "ANSWER",
+      "ignore_probability": 0.19,
+      "seconds": 0.2888
+    },
+    {
+      "case": "hebrew_status",
+      "expected": "IGNORE",
+      "choice": "IGNORE",
+      "ignore_probability": 1.0,
+      "seconds": 0.2839
+    },
+    {
+      "case": "hebrew_calendar",
+      "expected": "ANSWER",
+      "choice": "ANSWER",
+      "ignore_probability": 0.06,
+      "seconds": 0.2666
+    },
+    {
+      "case": "ambiguous",
+      "expected": "UNCERTAIN",
+      "choice": "UNCERTAIN",
+      "ignore_probability": 0.4,
+      "seconds": 0.2797
+    },
+    {
+      "case": "question_response",
+      "expected": "ANSWER",
+      "choice": "ANSWER",
+      "ignore_probability": 0.01,
+      "seconds": 0.2682
+    }
+  ]
+}

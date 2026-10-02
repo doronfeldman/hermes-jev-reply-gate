@@ -13,3 +13,5 @@ benchmarks/local-results/
 build/
 dist/
 *.egg-info/
+
+.superpowers/

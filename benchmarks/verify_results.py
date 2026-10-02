@@ -1,6 +1,7 @@
 """Validate published benchmark records without network calls."""
 import json
 import statistics
+import subprocess
 from pathlib import Path
 
 
@@ -48,7 +49,16 @@ def main():
         assert len(samples) == sum(s["n"] + s["errors"] for s in summaries)
         assert all("host" not in row for row in rows)
     assert conditions == 5
-    for path in here.parent.rglob("*"):
+    root = here.parent
+    try:
+        names = subprocess.check_output(
+            ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+            cwd=root, stderr=subprocess.DEVNULL).decode().split("\0")
+        paths = [root / name for name in names if name]
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        ignored = {".git", ".superpowers", ".pytest_cache", ".venv", "__pycache__", "build", "dist"}
+        paths = [p for p in root.rglob("*") if not ignored.intersection(p.relative_to(root).parts)]
+    for path in paths:
         if (not path.is_file() or ".git" in path.parts or "__pycache__" in path.parts
                 or path == Path(__file__).resolve()):
             continue

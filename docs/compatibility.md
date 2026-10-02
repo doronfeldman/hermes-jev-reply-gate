@@ -5,7 +5,7 @@ extension developed from Hermes **0.21.5, `34f8ec3b407e50bad3ae27e4cd79d65212061
 That base commit alone is unsupported. The required capability is
 `PluginContext.register_ingress_policy(async_callback)` plus `on_unload` and scoped
 `get_config`. There is no fallback to Telegram native handlers or a downstream hook.
-The matching host change must be reviewed and installed before live use; these tests do
+The [matching host patch](../compat/README.md) must be installed before live use; these tests do
 not establish compatibility with arbitrary future Hermes releases.
 
 The host invokes `callback(request)` for authorized ordinary group text with complete,
@@ -55,8 +55,7 @@ settings, secret files, plugin managers and databases. A synthetic policy exerci
 second normalized platform while the Jev plugin itself remains Telegram-scoped.
 Wheel entrypoint imports are tested
 outside the checkout. Transport-control and transcript race proofs belong to the host suite.
-Actual Telegram delivery, real Jev latency, accuracy and live profile deployment remain
-unverified. No Discord/Slack support is claimed.
+Offline native Telegram dispatch and the actual Jev client were checked separately. Eight synthetic live API calls on October 2, 2026 averaged 0.321 seconds (median 0.282 seconds), all with expected labels. This does not establish production accuracy or live chat delivery. No Discord/Slack plugin support is claimed.
 
 Run the standalone suite:
 

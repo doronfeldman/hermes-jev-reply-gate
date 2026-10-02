@@ -2,7 +2,7 @@
 
 An experimental Hermes Agent plugin that uses [TypeSafe AI's Jev](https://docs.typesafe.ai/introduction) to decide whether Hermes should participate in an ordinary Telegram group conversation.
 
-**Status: implemented with offline tests; requires an unreleased generic Hermes ingress extension.** Unmodified Hermes 0.21.5 is unsupported. No live deployment or suppression evaluation has been performed. See [installation](docs/install.md), [compatibility](docs/compatibility.md), and [evaluation](docs/evaluation.md).
+**Status: implemented with offline tests; requires the [bundled generic Hermes ingress patch](compat/README.md).** Unmodified Hermes 0.21.5 is unsupported. The actual client passed eight synthetic live API checks; production suppression remains unevaluated. See [installation](docs/install.md), [compatibility](docs/compatibility.md), and [evaluation](docs/evaluation.md).
 
 ## Intended behavior
 
@@ -49,8 +49,8 @@ No API keys, private chat messages, group IDs, server addresses, or production c
 
 ## Roadmap
 
-- Review and publish the matching generic Hermes host extension.
-- Measure actual integration latency; historical numbers used a pooled HTTP client.
+- Seek upstream support for the generic Hermes host extension.
+- Monitor actual gateway latency; eight request-local client smoke calls averaged 0.321 seconds, while historical numbers used a pooled HTTP client.
 - Validate representative conversations in scoped shadow mode before suppression.
 - Publish a supported release after host and live-rollout checks pass.
 

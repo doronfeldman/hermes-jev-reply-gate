@@ -1,5 +1,7 @@
 # Experimental installation
 
+The matching host patch and exact base are published in [compat](../compat/README.md).
+
 This plugin requires the **unreleased generic Hermes ingress extension** described in
 [compatibility](compatibility.md). Unmodified Hermes 0.21.5 cannot load it. Do not install
 it into a production gateway until the matching host implementation and review are available.
