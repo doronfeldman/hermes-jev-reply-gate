@@ -1,0 +1,32 @@
+[
+  {
+    "id": "english_chatter",
+    "expected": "IGNORE",
+    "conversation": "Sam: Shall we have dinner at eight?\nAlex: Sounds good.\nLatest, Sam: I'll book the table."
+  },
+  {
+    "id": "english_request",
+    "expected": "ANSWER",
+    "conversation": "Sam: We still need to book dinner.\nAlex: I'll do it later.\nLatest, Alex: Hermes, remind us tomorrow morning to book dinner."
+  },
+  {
+    "id": "english_capability",
+    "expected": "ANSWER",
+    "conversation": "Sam: We should find a free evening next week.\nAlex: My calendar is packed.\nLatest, Sam: Can you check our shared calendar for a free evening next week?"
+  },
+  {
+    "id": "hebrew_chatter",
+    "expected": "IGNORE",
+    "conversation": "סם: מתי אתה חוזר?\nאלכס: בעוד חצי שעה.\nLatest, אלכס: אני בדרך הביתה."
+  },
+  {
+    "id": "hebrew_request",
+    "expected": "ANSWER",
+    "conversation": "אלכס: צריך לקבוע זמן לארוחת ערב.\nסם: אולי מחר.\nLatest, אלכס: הרמס, תבדוק אם שנינו פנויים מחר בשמונה ביומן המשותף."
+  },
+  {
+    "id": "hebrew_followup",
+    "expected": "ANSWER",
+    "conversation": "אלכס: הרמס, תוסיף לנו ארוחת ערב מחר.\nHermes: באיזו שעה לקבוע את האירוע?\nLatest, אלכס: בשמונה בערב."
+  }
+]
