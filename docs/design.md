@@ -2,6 +2,54 @@
 
 Status: implementation pending. This describes the intended contract, not current plugin behavior.
 
+## First release and Hermes abstractions
+
+Hermes already normalizes inbound traffic into `MessageEvent` with a `SessionSource`, and its platforms share `BasePlatformAdapter`. Its `pre_gateway_dispatch` hook is also platform-independent. However, the hook runs in the runner's normal admission path, after the adapter can already route a busy-session message to queueing or steering. It is not a complete cross-platform early gate.
+
+Release 0.1 will therefore have a transport-independent engine and a Telegram binding. The engine owns bounded attributed context, Jev classification, decision validation, timeouts, and shadow/suppress policy. The binding owns Telegram trigger detection, authorization, session identity, native dispatch stopping, and Hermes observation persistence. It converts Hermes's normalized event into the engine's input; the engine does not import the Telegram SDK or Hermes internals.
+
+This deliberately does not claim working Discord/Slack support. Adding those bindings should reuse the engine. A future generic Hermes hook before busy routing could replace the native bindings, but this release makes no core edits and does not monkey-patch adapters.
+
+## Release 0.1 settings and defaults
+
+Use `plugins.entries.hermes-jev-reply-gate.settings` in the owning profile's `config.yaml`:
+
+```yaml
+plugins:
+  entries:
+    hermes-jev-reply-gate:
+      enabled: true
+      settings:
+        enabled: false
+        mode: shadow
+        model: jev-1.13.0
+        timeout_seconds: 1.0
+        ignore_probability: 0.95
+        context_messages: 12
+        context_characters: 6000
+        max_sessions: 128
+        telegram:
+          group_ids: []
+```
+
+Plugin loading and reply-gate enablement are separate. Empty groups means no classification. Accept only `shadow` and `suppress` modes; reject invalid settings before registering a handler. The 0.95 threshold is a conservative starting setting, not a measured guarantee. Shadow mode remains the deployment default until representative labeled conversations support suppression.
+
+For suppression, require Hermes's existing group-observation support to be enabled and the target group to appear in its observation allowlist. Use the same shared observation source as later triggered turns. If observation persistence fails, continue normal dispatch rather than lose the message. Settings are re-read under the owning profile at message time, so disabling the gate makes any still-registered native handler inert. Restart the gateway after code or secret changes.
+
+Context and session limits must be positive integers; timeout must be finite and positive; ignore probability must be finite in `(0.5, 1]`. Long latest messages that cannot fit the configured context budget pass normally without classification; do not classify truncated instructions. Retain recent complete attributed context entries within the message/character limits and evict idle sessions at `max_sessions`.
+
+Classification is bounded by a one-second overall operation by default, including lock waits. A waiting message passes normally if that budget is exhausted. Each session is serialized for context consistency; other sessions proceed independently. Explicit control messages bypass classification and never wait on its lock.
+
+Only ordinary eligible text is classified. Human bot replies and pending clarification responses bypass it. A native handler runs in an earlier handler group than the core handler, with blocking execution for that update. In shadow mode it simply returns; in suppression mode it stops propagation only after an eligible confident ignore has been successfully recorded as an observation.
+
+The binding checks Hermes's existing sender, group/topic, own-bot, and bot-to-bot gates before any external request. It must resolve the owning profile and canonical session identity before accessing settings, credentials, pending prompts, or context. A resolved source user ID is required for classification; ambiguous anonymous/service messages follow normal Hermes handling.
+
+Read classifier context from the owning Hermes session's recent transcript plus bounded unpersisted inbound context, with message IDs used to avoid duplicates. This lets accepted turns and Hermes replies inform later follow-up decisions without inventing a second conversation history. Suppressed observations remain in Hermes's existing transcript path. Shadow decisions create no extra transcript entries.
+
+TypeSafe responses must contain the expected pinned model, a recognized choice, finite probabilities in `[0, 1]` for exactly the three labels, and a probability total consistent with rounded API values. Unexpected or inconsistent responses pass normally. Require `IGNORE` to be the maximum-probability choice as well as to meet the configured threshold.
+
+Log one structured decision record through Hermes logging with mode, model, selected action, probabilities, elapsed milliseconds, and reason. Do not log content, sender IDs, group IDs, credentials, or API response bodies. Use Hermes's log rotation and profile routing. Emit a startup warning when a suppression group cannot preserve observed context; leave that group ungated.
+
 ## Scope
 
 Enable the gate explicitly per Hermes profile and Telegram group. Honor the profile's sender authorization before sending content to Jev or adding it to conversational context. Unconfigured profiles, groups, private chats, and unauthorized senders must not be classified.
