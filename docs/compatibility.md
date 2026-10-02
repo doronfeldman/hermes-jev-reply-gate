@@ -43,7 +43,12 @@ Offline verification covers strict settings and API schema, bounded complete con
 English/Hebrew policy plumbing, attribution, A→B→A scoped keys, shadows, runtime disable,
 unload, timeouts and cancellation. The opt-in integration suite loads the directory
 plugin through the real amended PluginManager and runs the real ingress evaluator into
-temporary SQLite, including idempotent replay. Wheel entrypoint imports are tested
+temporary SQLite, including idempotent replay, restored actual-author authorization,
+command/media/addressing bypasses, real clarification/approval/update/slash-confirm state
+before and during HTTP, and unpersisted active input. A→B→A tests switch actual homes,
+settings, secret files, plugin managers and databases. A synthetic policy exercises a
+second normalized platform while the Jev plugin itself remains Telegram-scoped.
+Wheel entrypoint imports are tested
 outside the checkout. Transport-control and transcript race proofs belong to the host suite.
 Actual Telegram delivery, real Jev latency, accuracy and live profile deployment remain
 unverified. No Discord/Slack support is claimed.
