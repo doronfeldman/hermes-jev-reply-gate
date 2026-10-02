@@ -59,7 +59,7 @@ async def test_real_manager_load_scoped_credentials_and_unload(loaded_plugin, mo
     for key in ('scope-a', 'scope-b', 'scope-a'):
         token = set_secret_scope({'TYPESAFE_API_KEY': key}, profile_home=str(profile))
         try:
-            assert await callback(event) == {'action': 'observe'}
+            assert (await callback(event))['action'] == 'observe'
         finally:
             reset_secret_scope(token)
     assert [r.headers['authorization'] for r in seen] == ['Bearer scope-a', 'Bearer scope-b', 'Bearer scope-a']
@@ -384,3 +384,38 @@ async def test_real_a_b_a_runtime_homes_keep_settings_secrets_and_transcripts_is
     finally:
         manager_b.unload()
         store_b._db.close()
+
+
+@pytest.mark.parametrize('change', ['disable', 'shadow', 'unload'])
+@pytest.mark.asyncio
+async def test_change_after_policy_return_before_final_authorization_prevents_commit(host_pipeline, change):
+    import asyncio
+    import threading
+    from gateway import ingress
+    p = host_pipeline
+    reached, release = asyncio.Event(), threading.Event()
+    loop = asyncio.get_running_loop()
+    authorizations = []
+    def authorized(source):
+        authorizations.append(source.user_id)
+        if len(authorizations) == 2:
+            loop.call_soon_threadsafe(reached.set)
+            assert release.wait(2), 'test failed to release final authorization'
+        return True
+    p.runner._is_user_authorized_for_source = authorized
+    task = asyncio.create_task(ingress.evaluate(p.runner, p.event(), p.entry.session_key, 'previous'))
+    try:
+        await asyncio.wait_for(reached.wait(), 1)
+        assert len(p.seen) == 1  # The policy already returned its observe intent.
+        if change == 'unload':
+            p.manager.unload('hermes-jev-reply-gate')
+        else:
+            config = json.loads((p.profile / 'config.yaml').read_text())
+            settings = config['plugins']['entries']['hermes-jev-reply-gate']['settings']
+            settings['enabled' if change == 'disable' else 'mode'] = False if change == 'disable' else 'shadow'
+            (p.profile / 'config.yaml').write_text(json.dumps(config))
+    finally:
+        release.set()
+    assert await task is False
+    assert len(p.store._db.get_messages(p.entry.session_id)) == 1
+    assert not p.store._dirty_transcripts

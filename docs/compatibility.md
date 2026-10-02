@@ -21,8 +21,12 @@ bounded prior context. Its immutable request exposes:
 | `history` | Chronological tuple of immutable `role`, `content` entries; excludes current event |
 | `reply_expected` | Exactly `False` for ordinary text; `True` or unknown bypasses |
 
-The plugin returns only `{"action": "allow"}` or `{"action": "observe"}`. The host
-validates the intent and atomically owns observation/continuation, redelivery, generation
+The plugin returns `{"action": "allow"}` or an `observe` intent with a synchronous
+`commit_guard` callable. The guard captures the classified settings and plugin generation,
+then re-reads scoped settings and checks that suppression is still enabled when the host
+invokes it at the observation boundary. Exceptions or a false result allow normal dispatch.
+The host combines this with its registration-generation guard inside the atomic write
+boundary, after final authorization awaits. It owns observation/continuation, redelivery, generation
 changes, cancellation, authorization, pending controls, busy routing and scheduling.
 The plugin never writes a transcript, acknowledges a transport event, or owns a second
 conversation history. Request-local speaker labels remove valid attribution names and
@@ -45,7 +49,8 @@ unload, timeouts and cancellation. The opt-in integration suite loads the direct
 plugin through the real amended PluginManager and runs the real ingress evaluator into
 temporary SQLite, including idempotent replay, restored actual-author authorization,
 command/media/addressing bypasses, real clarification/approval/update/slash-confirm state
-before and during HTTP, and unpersisted active input. A→B→A tests switch actual homes,
+before and during HTTP, unpersisted active input, and disable/shadow/unload changes
+after the policy returns while final authorization is still awaiting. A→B→A tests switch actual homes,
 settings, secret files, plugin managers and databases. A synthetic policy exercises a
 second normalized platform while the Jev plugin itself remains Telegram-scoped.
 Wheel entrypoint imports are tested

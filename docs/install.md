@@ -63,7 +63,8 @@ it is not a suppressed message or a correctness measurement. Missing credentials
 normal processing. No startup network request is made.
 
 For rollback, set `settings.enabled: false`. Each callback re-reads settings before
-classification and after the await. Disable or unload the plugin and restart for code or
+classification, after the await, and through its synchronous guard at the host observation
+boundary. Disable or unload the plugin and restart for code or
 credential rollback. Hermes owns registry generation invalidation; retained callbacks
 also become inert on unload. Existing observations stay in the canonical transcript.
 

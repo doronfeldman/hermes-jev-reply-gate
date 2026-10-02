@@ -84,7 +84,18 @@ class IngressPolicy:
             'probabilities': dict(decision.classification.probabilities) if decision.classification else None,
             'elapsed_ms': round((time.monotonic() - started) * 1000, 2),
         }, sort_keys=True))
-        return {'action': decision.action}
+        if decision.action == 'observe':
+            def commit_guard():
+                # Invoked by the host under the same owning profile scope at the
+                # synchronous observation boundary, after any final authorization await.
+                try:
+                    current = read_settings(self.ctx)
+                    return (self.active and current == settings and current.enabled
+                            and current.mode == 'suppress')
+                except Exception:
+                    return False
+            return {'action': 'observe', 'commit_guard': commit_guard}
+        return {'action': 'allow'}
 
 
 def register(ctx):

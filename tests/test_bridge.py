@@ -90,7 +90,7 @@ async def test_missing_key_does_not_fall_back_to_environment(monkeypatch):
 async def test_suppression_returns_only_intent_and_logs_bounded_metadata(monkeypatch, caplog):
     instance, seen = policy(monkeypatch)
     with caplog.at_level(logging.INFO, logger='hermes.plugins.hermes-jev-reply-gate'):
-        assert await instance(Request()) == {'action': 'observe'}
+        assert (await instance(Request()))['action'] == 'observe'
     payload = json.loads(seen[0].content)
     assert payload['state'][0]['content'] == 'Speaker 1: private-message'
     for forbidden in ('private-secret', 'private-message', 'private-session-id', '12345', '-100123', 'Private Name'):
@@ -137,7 +137,7 @@ async def test_runtime_scope_key_isolation_a_b_a(monkeypatch):
     for secret in ('a', 'b', 'a'):
         token = key.set(secret)
         try:
-            assert await instance(Request()) == {'action': 'observe'}
+            assert (await instance(Request()))['action'] == 'observe'
         finally:
             key.reset(token)
     assert [request.headers['authorization'] for request in seen] == ['Bearer a', 'Bearer b', 'Bearer a']
@@ -176,9 +176,9 @@ async def test_unrelated_session_proceeds_while_first_stalls(monkeypatch):
     instance, _ = policy(monkeypatch, handler=serve)
     task = asyncio.create_task(instance(Request(text='first')))
     await entered.wait()
-    assert await asyncio.wait_for(instance(Request(session_key='other', text='second')), .2) == {'action': 'observe'}
+    assert (await asyncio.wait_for(instance(Request(session_key='other', text='second')), .2))['action'] == 'observe'
     release.set()
-    assert await task == {'action': 'observe'}
+    assert (await task)['action'] == 'observe'
 
 
 @pytest.mark.asyncio
@@ -194,3 +194,34 @@ async def test_unload_during_request_prevents_late_observe(monkeypatch):
     instance.close()
     release.set()
     assert await task == {'action': 'allow'}
+
+
+@pytest.mark.parametrize('change', ['disable', 'shadow', 'threshold', 'groups', 'invalid', 'unload'])
+@pytest.mark.asyncio
+async def test_observe_intent_commit_guard_rechecks_settings_after_callback_return(monkeypatch, change):
+    ctx = Context()
+    instance, _ = policy(monkeypatch, ctx)
+    intent = await instance(Request())
+    assert intent['action'] == 'observe'
+    assert callable(intent.get('commit_guard'))
+    guard = intent['commit_guard']
+    assert guard() is True
+    if change == 'disable':
+        ctx.settings['enabled'] = False
+    elif change == 'shadow':
+        ctx.settings['mode'] = 'shadow'
+    elif change == 'threshold':
+        ctx.settings['ignore_probability'] = .99
+    elif change == 'groups':
+        ctx.settings['telegram'] = {'group_ids': []}
+    elif change == 'invalid':
+        ctx.settings['mode'] = 'invalid'
+    elif change == 'unload':
+        instance.close()
+    assert guard() is False
+
+
+@pytest.mark.asyncio
+async def test_allow_intent_does_not_expose_commit_guard(monkeypatch):
+    instance, _ = policy(monkeypatch, Context({'mode': 'shadow'}))
+    assert await instance(Request()) == {'action': 'allow'}
