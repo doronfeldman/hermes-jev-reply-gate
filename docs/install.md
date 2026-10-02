@@ -3,13 +3,13 @@
 The matching host patch and exact base are published in [compat](../compat/README.md).
 
 This plugin requires the **unreleased generic Hermes ingress extension** described in
-[compatibility](compatibility.md). Unmodified Hermes 0.21.5 cannot load it. Do not install
-it into a production gateway until the matching host implementation and review are available.
+[compatibility](compatibility.md). Unmodified Hermes 0.21.5 cannot load it. Apply the published matching patch before installing the plugin. Start with scoped shadow
+evaluation before considering suppression.
 
 Use the Python environment that runs the amended Hermes gateway:
 
 ```sh
-python -m pip install /path/to/hermes-jev-reply-gate
+uv pip install --python /path/to/hermes/.venv/bin/python /path/to/hermes-jev-reply-gate
 ```
 
 The wheel registers `hermes_agent.plugins` entry point `hermes-jev-reply-gate`.

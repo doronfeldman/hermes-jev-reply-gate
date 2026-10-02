@@ -1,0 +1,61 @@
+name: Jev live smoke
+
+# This workflow is loaded from the default branch, not the PR's edited YAML.
+# Never broaden this to execute fork code or add a repository-wide Jev secret.
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'reply_gate/**'
+      - '__init__.py'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - 'scripts/jev_smoke.py'
+      - '.github/workflows/jev-live.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jev-live-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    # Job-level guard runs before checkout, setup, and environment-secret access.
+    if: >-
+      github.repository == 'doronfeldman/hermes-jev-reply-gate' &&
+      github.event.pull_request.user.login == 'doronfeldman' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.base.ref == 'main' &&
+      github.actor == 'doronfeldman' &&
+      github.triggering_actor == 'doronfeldman'
+    environment: jev-live
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout trusted smoke harness
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          path: trusted
+          persist-credentials: false
+      - name: Checkout the eligible owner's exact PR commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: candidate
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
+        with:
+          version: '0.12.3'
+          python-version: '3.14'
+          enable-cache: false
+      - run: uv sync --locked --no-dev
+        working-directory: candidate
+      - name: Three synthetic requests (no retries)
+        working-directory: candidate
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: uv run --no-sync python "$GITHUB_WORKSPACE/trusted/scripts/jev_smoke.py" --live

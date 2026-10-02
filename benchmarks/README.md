@@ -14,13 +14,12 @@ Jev's estimated sample cost is `sample_input_tokens × 0.042 / 1_000_000`, using
 
 ## Reproduce Jev measurements
 
-Requires Python 3.10+ and `httpx`. This makes authenticated, potentially billable API requests. Set `TYPESAFE_API_KEY` securely in your environment; the script never prints the key.
+Use the repository uv environment. This makes authenticated, potentially billable API requests. Set `TYPESAFE_API_KEY` securely in your environment; the script never prints the key.
 
 ```sh
-python3 -m venv .venv
-.venv/bin/python -m pip install httpx
+uv sync --locked
 mkdir -p benchmarks/local-results
-.venv/bin/python benchmarks/benchmark_jev.py > benchmarks/local-results/jev.jsonl
+uv run --locked python benchmarks/benchmark_jev.py > benchmarks/local-results/jev.jsonl
 ```
 
 The model is pinned to `jev-1.13.0`. Historical model availability and prices may change. Errors log their class, without response bodies or request credentials.
@@ -44,7 +43,7 @@ The public runners adapt the original scripts to read pseudonymized cases from f
 ## Check the published evidence locally
 
 ```sh
-python3 benchmarks/verify_results.py
+uv run --locked python benchmarks/verify_results.py
 ```
 
 The checker recomputes every summary from sample rows, verifies the case/label roster and Jev cost calculation, and validates the published files against deployment details that should be absent. It makes no network requests.

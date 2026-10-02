@@ -19,6 +19,39 @@ Incoming Telegram message
 
 The default is **shadow mode**, with classification disabled until explicitly scoped and enabled: record decisions without suppressing messages. Enabling suppression would follow validation on representative conversations, especially follow-ups and Hebrew messages.
 
+## Installation
+
+Apply the [matching Hermes patch](compat/README.md), install the plugin into the
+Hermes Python environment with uv, and configure the owning profile's standard
+`TYPESAFE_API_KEY` secret plus an explicit group allowlist. Follow the
+[installation guide](docs/install.md) for the complete configuration and rollback.
+A stock Hermes installation cannot load this plugin yet.
+
+## Development
+
+Use [uv](https://docs.astral.sh/uv/) 0.12.3 or newer. The repo commits its lockfile
+and defaults to Python 3.14; CI also checks standalone support on Python 3.11.
+
+```sh
+uv sync --locked
+uv run --locked ruff check .
+uv run --locked pytest -q
+uv run --locked python benchmarks/verify_results.py
+uv build --no-sources
+```
+
+Normal tests are offline and require no API key. Real Hermes integration is a
+separate CI job using the pinned host plus the bundled patch. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for that setup and [AGENTS.md](AGENTS.md) for
+ownership, privacy, testing, and maintenance rules.
+
+Every PR gets offline CI. Paid Jev smoke checks run only for `doronfeldman`-authored,
+same-repository PRs triggered by `doronfeldman`; fork and other-author PRs never
+receive the key. The key belongs only in the `jev-live` GitHub environment, restricted
+to `main`. Each eligible run uses three synthetic requests with no retries. The
+trusted live workflow becomes active after this setup reaches `main`.
+[CI policy and secret setup](CONTRIBUTING.md#ci-and-paid-api-checks).
+
 ## Initial latency measurements
 
 Measured on October 2, 2026 from the same deployment machine, using six synthetic English/Hebrew examples twice per condition. Each request classifies one message; warm-ups are excluded.
@@ -43,7 +76,7 @@ For a simplified cost comparison, let `C_gate` be the classification cost, `C_ag
 
 ## Integration design
 
-The plugin registers one policy through `ctx.register_ingress_policy`. Hermes owns authorization, transport scheduling, session identity and atomic observation writes; the plugin supplies the scoped Jev decision. Ignored messages remain in the one authoritative Hermes transcript. The [design](docs/design.md) preserves the reasoning and historical native-handler proposal; [compatibility](docs/compatibility.md) describes the implemented contract.
+The plugin registers one policy through `ctx.register_ingress_policy`. Hermes owns authorization, transport scheduling, session identity and atomic observation writes; the plugin supplies the scoped Jev decision. Ignored messages remain in the one authoritative Hermes transcript. The [architecture](docs/design.md) explains the current design and why the host patch is needed; [compatibility](docs/compatibility.md) describes the implemented contract.
 
 No API keys, private chat messages, group IDs, server addresses, or production configuration are included. Jev receives message content when classification is enabled; configure the scope accordingly.
 

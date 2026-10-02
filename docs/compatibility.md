@@ -57,20 +57,7 @@ Wheel entrypoint imports are tested
 outside the checkout. Transport-control and transcript race proofs belong to the host suite.
 Offline native Telegram dispatch and the actual Jev client were checked separately. Eight synthetic live API calls on October 2, 2026 averaged 0.321 seconds (median 0.282 seconds), all with expected labels. This does not establish production accuracy or live chat delivery. No Discord/Slack plugin support is claimed.
 
-Run the standalone suite:
-
-```sh
-python -m pip install '.[test]'
-python -m pytest -q
-python benchmarks/verify_results.py
-```
-
-Include amended-host integration (otherwise those tests skip explicitly):
-
-```sh
-HERMES_TEST_HOST=/path/to/amended-hermes python -m pytest -q
-```
-
-Use that host's Python environment with its dependencies installed. Tests isolate a
-synthetic profile, replace only external HTTP with `httpx.MockTransport`, and do not
-require credentials or a Telegram connection.
+For reproducible standalone and amended-host test commands, see
+[development](../CONTRIBUTING.md). Integration tests isolate synthetic profiles,
+replace HTTP with `httpx.MockTransport`, and require neither credentials nor a
+Telegram connection. Test-run results and review history belong in the PR.
