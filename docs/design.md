@@ -1,14 +1,14 @@
 # Proposed integration
 
-Status: behavioral design approved; implementation pending. The host-extension amendment below awaits approval. This describes the intended contract, not current plugin behavior.
+Status: behavioral design and generic host-extension amendment approved. The standalone plugin is implemented with offline tests; live deployment remains pending. See [compatibility](compatibility.md) for the implemented contract and explicit verification limits.
 
-## Astra implementation amendment — pending approval
+## Astra implementation amendment — approved
 
 Astra's review of the pinned Hermes source found that the proposed native Telegram handler cannot preserve shadow admission/retry behavior and would block later controls at the transport queue. Existing observation helpers also do not provide an atomic success/continue contract. See the [review](astra-review.md) and [revised implementation plan](superpowers/plans/2026-10-02-reply-gate.md).
 
 The recommendation is a generic Hermes ingress extension: authorize and resolve profile/session identity, take bounded read-only context and pending-control snapshots, invoke the plugin before busy routing under host-owned scheduling, then atomically preserve an ignored event or continue normal processing. A continued event must not leave a queued observation that can persist later. Hermes retains one event stream and one authoritative transcript; Jev remains in the standalone plugin.
 
-This proposes replacing the native Telegram binding and allowing generic host changes, subject to user approval. No live shadow or suppression integration should be built/deployed on the unmodified pinned host. The sections below preserve the originally discussed binding as design history where noted; the approved behavior, scoped credentials and single-transcript requirement remain unchanged.
+The approved amendment replaces the native Telegram binding and permits generic host changes. No live shadow or suppression integration should be built/deployed on the unmodified pinned host. The sections below preserve the originally discussed binding as design history where noted; the approved behavior, scoped credentials and single-transcript requirement remain unchanged.
 
 ## First release and Hermes abstractions
 
@@ -30,7 +30,7 @@ plugins:
       settings:
         enabled: false
         mode: shadow
-        model: jev-1.13.0
+        model_version: jev-1.13.0
         timeout_seconds: 1.0
         ignore_probability: 0.95
         context_messages: 12
@@ -92,11 +92,11 @@ Pending clarification and control-message detection must use Hermes's actual ses
 
 ## Network and operations
 
-Use a persistent async HTTP client. Pin `jev-1.13.0` for initial evaluation rather than a moving alias. Bound the whole classification operation, not just an individual socket read, with no long retry queue in the inbound path.
+The initial implementation uses a request-local async HTTP client with cancellation-safe cleanup; benchmark connection overhead before considering a pooled lifecycle. Pin `jev-1.13.0` for initial evaluation rather than a moving alias. Bound the whole classification operation, not just an individual socket read, with no long retry queue in the inbound path.
 
 Read `TYPESAFE_API_KEY` using Hermes's standard `agent.secret_scope.get_secret("TYPESAFE_API_KEY")`, inside the owning profile's runtime scope. Hermes loads the profile's `.env` and its supported credential sources; the plugin does not parse a separate secret file or directly read the process-global environment. This preserves profile isolation when one gateway serves multiple profiles. Never store the key in configuration examples, transcripts, or decision logs.
 
-The settings schema and initial defaults are specified above; code implementing that schema is still pending. Settings cover enabled state, mode, group allowlist, model version, threshold, classification timeout and context limits.
+The settings schema and initial defaults are implemented. `model_version` replaces the original `model` key because Hermes reserves that plugin-relative configuration name. Settings cover enabled state, mode, group allowlist, model version, threshold, classification timeout and context limits.
 
 Shadow mode records the proposed action and continues normal message handling. Logs should include model, decision, probabilities, elapsed time, and failure category. Omit message bodies by default. Retention and sampling should be bounded.
 

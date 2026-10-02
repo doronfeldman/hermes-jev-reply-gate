@@ -1,0 +1,7 @@
+name: hermes-jev-reply-gate
+version: "0.1.0"
+description: "Experimental scoped Jev reply policy using the generic Hermes ingress extension."
+license: MIT
+kind: standalone
+python_dependencies:
+  - "httpx>=0.27,<1"

@@ -19,11 +19,12 @@ class Settings:
 
     @classmethod
     def from_mapping(cls, value):
-        allowed = {field.name for field in fields(cls)} - {'group_ids'} | {'telegram'}
+        allowed = {field.name for field in fields(cls)} - {'group_ids', 'model'} | {'telegram', 'model_version'}
         if not isinstance(value, Mapping) or set(value) - allowed:
             raise ValueError('Invalid reply-gate settings')
         defaults = cls()
-        values = {name: value.get(name, getattr(defaults, name)) for name in allowed - {'telegram'}}
+        values = {name: value.get(name, getattr(defaults, name)) for name in allowed - {'telegram', 'model_version'}}
+        values['model'] = value.get('model_version', defaults.model)
         if type(values['enabled']) is not bool:
             raise ValueError('enabled must be boolean')
         if values['mode'] not in ('shadow', 'suppress'):

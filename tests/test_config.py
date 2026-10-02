@@ -41,3 +41,9 @@ def test_invalid_settings_rejected_without_echoing_values(mapping):
 
 def test_threshold_upper_boundary_is_valid():
     assert Settings.from_mapping({'ignore_probability': 1}).ignore_probability == 1
+
+
+def test_model_version_uses_a_host_allowed_plugin_relative_key():
+    assert Settings.from_mapping({'model_version': 'jev-1.13.0'}).model == 'jev-1.13.0'
+    with pytest.raises(ValueError):
+        Settings.from_mapping({'model_version': 'jev-latest'})

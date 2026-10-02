@@ -1,8 +1,8 @@
 # Hermes Jev Reply Gate
 
-An experimental design for a Hermes Agent plugin that uses [TypeSafe AI's Jev](https://docs.typesafe.ai/introduction) to decide whether Hermes should participate in an ordinary Telegram group conversation.
+An experimental Hermes Agent plugin that uses [TypeSafe AI's Jev](https://docs.typesafe.ai/introduction) to decide whether Hermes should participate in an ordinary Telegram group conversation.
 
-**Status: design and benchmark stage. The plugin is not implemented or installable yet.** The scripts here benchmark classification; they do not modify Hermes or Telegram behavior.
+**Status: implemented with offline tests; requires an unreleased generic Hermes ingress extension.** Unmodified Hermes 0.21.5 is unsupported. No live deployment or suppression evaluation has been performed. See [installation](docs/install.md), [compatibility](docs/compatibility.md), and [evaluation](docs/evaluation.md).
 
 ## Intended behavior
 
@@ -17,7 +17,7 @@ Incoming Telegram message
       Confident IGNORE                    → Preserve context, stay silent
 ```
 
-The proposed default is **shadow mode**: record decisions without suppressing messages. Enabling suppression would follow validation on representative conversations, especially follow-ups and Hebrew messages.
+The default is **shadow mode**, with classification disabled until explicitly scoped and enabled: record decisions without suppressing messages. Enabling suppression would follow validation on representative conversations, especially follow-ups and Hebrew messages.
 
 ## Initial latency measurements
 
@@ -43,18 +43,16 @@ For a simplified cost comparison, let `C_gate` be the classification cost, `C_ag
 
 ## Integration design
 
-Hermes exposes native Telegram handler registration and a `pre_gateway_dispatch` hook. A dispatch hook alone does not cover every busy-session path, so the proposed gate runs through an early native Telegram handler. The [design](docs/design.md) covers permissions, ignored-message context, timeouts, and implementation acceptance criteria.
+The plugin registers one policy through `ctx.register_ingress_policy`. Hermes owns authorization, transport scheduling, session identity and atomic observation writes; the plugin supplies the scoped Jev decision. Ignored messages remain in the one authoritative Hermes transcript. The [design](docs/design.md) preserves the reasoning and historical native-handler proposal; [compatibility](docs/compatibility.md) describes the implemented contract.
 
 No API keys, private chat messages, group IDs, server addresses, or production configuration are included. Jev receives message content when classification is enabled; configure the scope accordingly.
 
 ## Roadmap
 
-- Implement the scoped native Telegram handler and async Jev client.
-- Preserve ignored messages as attributed context without launching an agent turn.
-- Add shadow-mode decision logging and configurable thresholds/timeouts.
-- Test idle and busy sessions, permissions, follow-ups, errors, and profile isolation.
-- Validate on representative conversations before enabling suppression.
-- Document installation and publish a versioned plugin release after those checks pass.
+- Review and publish the matching generic Hermes host extension.
+- Measure actual integration latency; historical numbers used a pooled HTTP client.
+- Validate representative conversations in scoped shadow mode before suppression.
+- Publish a supported release after host and live-rollout checks pass.
 
 ## Sources
 

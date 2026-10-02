@@ -8,3 +8,8 @@ __pycache__/
 *.key
 *.pem
 benchmarks/local-results/
+
+.pytest_cache/
+build/
+dist/
+*.egg-info/
